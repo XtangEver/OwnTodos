@@ -4,16 +4,22 @@ OwnTodos 是一个离线本地的 Windows 任务工具。安装后可从桌面�
 
 ## 安装方式
 
-### 方式一：直接安装
+### 方式一：从 Releases 下载安装包
 
-1. 下载安装包：`OwnTodos 安装程序 0.1.0.exe`
-2. 双击运行安装包。
-3. 按安装向导完成安装。
-4. 安装完成后，从桌面快捷方式或开始菜单打开 `OwnTodos`。
+1. 打开仓库的 Releases 页面。
+2. 下载 `OwnTodos 安装程序 0.1.0.exe`。
+3. 双击运行安装包。
+4. 按安装向导完成安装。
+5. 安装完成后，从桌面快捷方式或开始菜单打开 `OwnTodos`。
 
-安装包由下面的命令生成：
+> 说明：本仓库只提交源码，不直接提交 `.exe` 或安装包压缩包。安装包应作为 GitHub Release 附件发布。
+
+### 方式二：从源码生成安装包
+
+需要先安装 Node.js。
 
 ```powershell
+npm install
 npm run dist
 ```
 
@@ -23,7 +29,33 @@ npm run dist
 release\OwnTodos 安装程序 0.1.0.exe
 ```
 
-### 方式二：从源码运行
+### 方式三：下载源码压缩包
+
+每个 Git 标签都会由 GitHub 自动生成源码压缩包。进入 Releases 或 Tags 页面后，可以下载：
+
+```text
+Source code (zip)
+Source code (tar.gz)
+```
+
+源码压缩包不包含已经构建好的安装程序。如果需要安装包，请下载 Release 附件，或按“从源码生成安装包”自行构建。
+
+## 发布安装包
+
+维护者发布新版本时：
+
+1. 本地运行 `npm run dist`。
+2. 在 GitHub 仓库页面进入 `Releases`。
+3. 选择对应标签，例如 `v0.1.0`。
+4. 上传本地生成的安装包：
+
+```text
+D:\work_dir\quadrant-todo\release\OwnTodos 安装程序 0.1.0.exe
+```
+
+5. 发布 Release。
+
+## 本地运行
 
 需要先安装 Node.js。
 
