@@ -1,0 +1,52 @@
+{
+  "name": "owntodos",
+  "version": "0.1.0",
+  "description": "一个离线本地的 Windows 任务工具。",
+  "main": "electron/main.cjs",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "electron": "electron .",
+    "test": "vitest",
+    "build": "vite build",
+    "dist": "npm run build && electron-builder --win nsis"
+  },
+  "build": {
+    "appId": "local.owntodos.app",
+    "productName": "OwnTodos",
+    "artifactName": "${productName} 安装程序 ${version}.${ext}",
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "OwnTodos",
+      "uninstallDisplayName": "卸载 OwnTodos",
+      "installerLanguages": [
+        "zh_CN"
+      ],
+      "language": "2052"
+    }
+  },
+  "dependencies": {
+    "vite": "^7.2.7"
+  },
+  "devDependencies": {
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12",
+    "vitest": "^4.0.15"
+  }
+}
