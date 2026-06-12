@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage } = require("electron");
 const fs = require("node:fs/promises");
 const path = require("node:path");
+const { createTrayIconImage } = require("./trayIcon.cjs");
 
 let mainWindow;
 let tray;
@@ -45,15 +46,7 @@ function createTray() {
     return;
   }
 
-  const icon = nativeImage.createFromDataURL(
-    "data:image/svg+xml;utf8," +
-      encodeURIComponent(`
-        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-          <rect width="32" height="32" rx="7" fill="#1f6f8b"/>
-          <path d="M9 16.5l4.2 4.1L23.5 10" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      `)
-  );
+  const icon = createTrayIconImage(nativeImage);
 
   tray = new Tray(icon);
   tray.setToolTip("OwnTodos");
