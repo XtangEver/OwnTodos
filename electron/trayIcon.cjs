@@ -24,7 +24,7 @@ function createTrayIconImage(nativeImage, app, baseDir = __dirname) {
   );
 
   if (icon.isEmpty()) {
-    throw new Error("托盘图标资源加载失败");
+    return null;
   }
 
   return icon;

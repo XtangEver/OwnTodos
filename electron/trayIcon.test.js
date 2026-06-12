@@ -29,4 +29,24 @@ describe("tray icon resource", () => {
 
     expect(iconPath).toBe("C:\\Program Files\\OwnTodos\\resources\\assets\\tray.ico");
   });
+
+  it("does not throw when nativeImage cannot load the icon", () => {
+    const { createTrayIconImage } = require("./trayIcon.cjs");
+    const nativeImage = {
+      createFromPath() {
+        return {
+          isEmpty() {
+            return true;
+          }
+        };
+      }
+    };
+
+    const icon = createTrayIconImage(nativeImage, {
+      isPackaged: false,
+      resourcesPath: ""
+    });
+
+    expect(icon).toBeNull();
+  });
 });

@@ -7,7 +7,7 @@ OwnTodos 是一个离线本地的 Windows 任务工具。安装后可从桌面�
 ### 方式一：从 Releases 下载安装包
 
 1. 打开仓库的 Releases 页面。
-2. 下载 `OwnTodos-Setup-0.1.3.exe`。
+2. 下载 `OwnTodos-Setup-0.1.4.exe`。
 3. 双击运行安装包。
 4. 按安装向导完成安装。
 5. 安装完成后，从桌面快捷方式或开始菜单打开 `OwnTodos`。
@@ -26,7 +26,7 @@ npm run dist
 生成位置：
 
 ```text
-release\OwnTodos 安装程序 0.1.3.exe
+release\OwnTodos 安装程序 0.1.4.exe
 ```
 
 ### 方式三：下载源码压缩包
@@ -46,14 +46,24 @@ Source code (tar.gz)
 
 1. 本地运行 `npm run dist`。
 2. 在 GitHub 仓库页面进入 `Releases`。
-3. 选择对应标签，例如 `v0.1.3`。
+3. 选择对应标签，例如 `v0.1.4`。
 4. 上传本地生成的安装包：
 
 ```text
-D:\work_dir\quadrant-todo\release\OwnTodos 安装程序 0.1.3.exe
+D:\work_dir\quadrant-todo\release\OwnTodos 安装程序 0.1.4.exe
 ```
 
 5. 发布 Release。
+
+## 故障排查
+
+如果窗口白屏、启动后退出，或托盘图标异常，请查看日志文件：
+
+```text
+%APPDATA%\OwnTodos\logs\main.log
+```
+
+OwnTodos 会优先打开主窗口。托盘创建失败时，程序不会再因为托盘问题直接退出；此时关闭窗口会退出程序，而不是隐藏到后台。
 
 ## 本地运行
 
