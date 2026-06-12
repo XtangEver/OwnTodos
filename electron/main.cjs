@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage } = require("electron");
 const fs = require("node:fs/promises");
 const path = require("node:path");
-const { createTrayIconImage } = require("./trayIcon.cjs");
+const { createTrayIconImage, getTrayIconPath } = require("./trayIcon.cjs");
 
 let mainWindow;
 let tray;
@@ -75,6 +75,11 @@ function createWindow() {
     minWidth: 860,
     minHeight: 620,
     title: "OwnTodos",
+    icon: getTrayIconPath({
+      baseDir: __dirname,
+      isPackaged: app.isPackaged,
+      resourcesPath: process.resourcesPath
+    }),
     backgroundColor: "#f5f7f9",
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
