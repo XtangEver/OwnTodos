@@ -46,7 +46,7 @@ function createTray() {
     return;
   }
 
-  const icon = createTrayIconImage(nativeImage);
+  const icon = createTrayIconImage(nativeImage, app);
 
   tray = new Tray(icon);
   tray.setToolTip("OwnTodos");

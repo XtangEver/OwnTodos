@@ -1,6 +1,6 @@
 {
   "name": "owntodos",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "一个离线本地的 Windows 任务工具。",
   "main": "electron/main.cjs",
   "type": "module",
@@ -19,6 +19,12 @@
       "dist/**/*",
       "electron/**/*",
       "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "electron/assets/tray.ico",
+        "to": "assets/tray.ico"
+      }
     ],
     "directories": {
       "output": "release"
