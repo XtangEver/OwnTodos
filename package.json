@@ -1,6 +1,6 @@
 {
   "name": "owntodos",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "一个离线本地的 Windows 任务工具。",
   "main": "electron/main.cjs",
   "type": "module",

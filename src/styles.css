@@ -69,7 +69,8 @@ button {
   gap: 8px;
 }
 
-.topbar-meta > span {
+.topbar-meta > span,
+.filter-tab {
   flex: 0 0 auto;
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -78,6 +79,28 @@ button {
   background: rgba(255, 255, 255, 0.76);
   font-size: 13px;
   box-shadow: 0 8px 22px rgba(30, 38, 51, 0.05);
+}
+
+.filter-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+}
+
+.filter-tab strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.filter-tab.is-active {
+  border-color: rgba(31, 111, 139, 0.38);
+  background: #edf7fb;
+  color: var(--blue);
+}
+
+.filter-tab.is-active strong {
+  color: #185a71;
 }
 
 .save-status {
@@ -232,7 +255,7 @@ button {
 
 .task-card {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   gap: 10px;
   align-items: flex-start;
   margin-bottom: 9px;
@@ -302,6 +325,30 @@ button {
   line-height: 1.4;
 }
 
+.subtask-progress {
+  color: #647084;
+  font-size: 12.5px;
+}
+
+.status-chip {
+  min-width: 58px;
+  height: 28px;
+  border: 1px solid #d5dde7;
+  border-radius: 999px;
+  padding: 0 10px;
+  background: #f7f9fb;
+  color: #526071;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.status-chip.status-doing {
+  border-color: #b9d8cc;
+  background: #eef8f3;
+  color: var(--green);
+}
+
 .icon-button {
   min-width: 30px;
   height: 28px;
@@ -363,6 +410,121 @@ button {
   padding: 10px;
   color: var(--text);
   resize: vertical;
+}
+
+.status-field {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.status-field legend,
+.subtasks-heading span {
+  color: #526071;
+  font-size: 13px;
+}
+
+.status-segment {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.status-segment label {
+  display: block;
+}
+
+.status-segment input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.status-segment span {
+  display: grid;
+  min-height: 38px;
+  place-items: center;
+  border: 1px solid #d4dbe5;
+  border-radius: 8px;
+  background: #fff;
+  color: #526071;
+}
+
+.status-segment input:checked + span {
+  border-color: #a9d0c1;
+  background: #eef8f3;
+  color: var(--green);
+}
+
+.completed-status {
+  margin: 0;
+  border: 1px solid #d4dbe5;
+  border-radius: 8px;
+  padding: 10px;
+  color: #526071;
+  background: #f7f9fb;
+}
+
+.subtasks-field {
+  display: grid;
+  gap: 10px;
+}
+
+.subtasks-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.subtasks-heading small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.subtask-list {
+  display: grid;
+  gap: 8px;
+}
+
+.subtask-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.subtask-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  accent-color: var(--green);
+}
+
+.subtask-row .icon-button {
+  min-height: 34px;
+}
+
+.subtask-add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.subtask-add button {
+  min-height: 40px;
+}
+
+.subtask-empty {
+  border: 1px dashed #cbd4df;
+  border-radius: 8px;
+  padding: 12px;
+  color: #8a96a8;
+  font-size: 13px;
+  text-align: center;
+  background: rgba(247, 249, 251, 0.72);
 }
 
 .edit-dialog menu {

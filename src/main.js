@@ -1,13 +1,20 @@
 import "./styles.css";
 import {
+  addSubtask,
   addTask,
+  deleteSubtask,
   deleteTask,
+  filterTasksByStatus,
   getQuadrantFromFlags,
+  getTaskStatusSummary,
   moveTask,
   normalizeTasks,
   reorderTask,
+  toggleSubtask,
   toggleTask,
-  updateTask
+  updateSubtask,
+  updateTask,
+  updateTaskStatus
 } from "./taskStore.js";
 
 const quadrantMeta = {
@@ -38,10 +45,28 @@ const quadrantMeta = {
 };
 
 const quadrants = Object.keys(quadrantMeta);
+const statusMeta = {
+  all: {
+    label: "All"
+  },
+  todo: {
+    label: "To Do",
+    next: "doing"
+  },
+  doing: {
+    label: "In Progress",
+    next: "todo"
+  },
+  done: {
+    label: "Done"
+  }
+};
+const statusFilters = ["all", "todo", "doing", "done"];
 const appRoot = document.querySelector("#app");
 let tasks = [];
 let draggedTaskId = "";
 let statusTimer = 0;
+let activeStatusFilter = "all";
 
 function escapeHtml(value) {
   return String(value)
@@ -100,14 +125,66 @@ function setTasks(nextTasks, shouldPersist = true) {
   }
 }
 
+function setTasksAndReopen(nextTasks, taskId, focusSelector = "") {
+  setTasks(nextTasks);
+  const task = tasks.find((item) => item.id === taskId);
+  if (task) {
+    openEditDialog(task, focusSelector);
+  }
+}
+
 function countPending(items) {
   return items.filter((task) => !task.completed).length;
 }
 
 function getSummary() {
-  const pending = countPending(tasks);
-  const completed = tasks.length - pending;
-  return { pending, completed };
+  return getTaskStatusSummary(tasks);
+}
+
+function getSubtaskSummary(task) {
+  const subtasks = Array.isArray(task.subtasks) ? task.subtasks : [];
+  const completed = subtasks.filter((subtask) => subtask.completed).length;
+  return {
+    completed,
+    total: subtasks.length
+  };
+}
+
+function renderStatusChip(task) {
+  if (task.completed) {
+    return "";
+  }
+
+  const status = statusMeta[task.status] ? task.status : "todo";
+  return `
+    <button class="status-chip status-${status}" type="button" title="切换任务状态" data-action="cycle-status" data-task-id="${escapeHtml(task.id)}">
+      ${statusMeta[status].label}
+    </button>
+  `;
+}
+
+function renderStatusFilters(summary) {
+  return statusFilters
+    .map(
+      (status) => `
+        <button class="filter-tab ${activeStatusFilter === status ? "is-active" : ""}" type="button" data-action="filter-status" data-status-filter="${status}">
+          <span>${statusMeta[status].label}</span>
+          <strong>${summary[status]}</strong>
+        </button>
+      `
+    )
+    .join("");
+}
+
+function renderTaskMeta(task) {
+  const subtaskSummary = getSubtaskSummary(task);
+  const parts = [];
+
+  if (subtaskSummary.total) {
+    parts.push(`<small class="subtask-progress">子任务 ${subtaskSummary.completed}/${subtaskSummary.total}</small>`);
+  }
+
+  return parts.join("");
 }
 
 function renderTask(task) {
@@ -120,7 +197,9 @@ function renderTask(task) {
       <button class="task-body" type="button" data-action="edit" data-task-id="${escapeHtml(task.id)}">
         <strong>${escapeHtml(task.title)}</strong>
         ${task.note ? `<small>${escapeHtml(task.note)}</small>` : ""}
+        ${renderTaskMeta(task)}
       </button>
+      ${renderStatusChip(task)}
       <button class="icon-button danger" type="button" title="删除" aria-label="删除任务" data-action="delete" data-task-id="${escapeHtml(task.id)}">删</button>
     </article>
   `;
@@ -128,7 +207,8 @@ function renderTask(task) {
 
 function renderQuadrant(quadrant) {
   const meta = quadrantMeta[quadrant];
-  const items = tasks.filter((task) => task.quadrant === quadrant);
+  const filteredTasks = filterTasksByStatus(tasks, activeStatusFilter);
+  const items = filteredTasks.filter((task) => task.quadrant === quadrant);
 
   return `
     <section class="quadrant" data-quadrant="${quadrant}">
@@ -162,8 +242,7 @@ function render() {
           <p>${dateLabel}</p>
         </div>
         <div class="topbar-meta">
-          <span>待处理 ${summary.pending}</span>
-          <span>已完成 ${summary.completed}</span>
+          ${renderStatusFilters(summary)}
           <span class="save-status" data-status data-tone="neutral">已自动保存</span>
         </div>
       </header>
@@ -196,6 +275,18 @@ function render() {
             <span>备注</span>
             <textarea name="note" rows="4"></textarea>
           </label>
+          <fieldset class="status-field" data-edit-status></fieldset>
+          <section class="subtasks-field">
+            <div class="subtasks-heading">
+              <span>子任务</span>
+              <small data-subtask-count></small>
+            </div>
+            <div class="subtask-list" data-subtask-list></div>
+            <div class="subtask-add">
+              <input type="text" autocomplete="off" placeholder="添加子任务" data-subtask-new-title />
+              <button type="button" data-action="add-subtask">添加</button>
+            </div>
+          </section>
           <menu>
             <button type="button" data-action="cancel-edit">取消</button>
             <button type="submit">保存</button>
@@ -221,14 +312,61 @@ function getGlobalIndexForDrop(quadrant, targetTaskId = "") {
   return lastQuadrantIndex === undefined ? withoutDragged.length : lastQuadrantIndex + 1;
 }
 
-function openEditDialog(task) {
+function renderEditStatus(task) {
+  if (task.completed) {
+    return `<legend>Status</legend><p class="completed-status">Done</p>`;
+  }
+
+  const status = statusMeta[task.status] ? task.status : "todo";
+  return `
+    <legend>Status</legend>
+    <div class="status-segment">
+      ${["todo", "doing"]
+        .map(
+          (value) => `
+            <label>
+              <input type="radio" name="status" value="${value}" data-task-status ${status === value ? "checked" : ""} />
+              <span>${statusMeta[value].label}</span>
+            </label>
+          `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function renderSubtaskRow(task, subtask) {
+  return `
+    <div class="subtask-row">
+      <input type="checkbox" aria-label="切换子任务完成状态" data-action="toggle-subtask" data-task-id="${escapeHtml(task.id)}" data-subtask-id="${escapeHtml(subtask.id)}" ${subtask.completed ? "checked" : ""} />
+      <input type="text" value="${escapeHtml(subtask.title)}" data-subtask-title data-task-id="${escapeHtml(task.id)}" data-subtask-id="${escapeHtml(subtask.id)}" />
+      <button class="icon-button danger" type="button" title="删除" aria-label="删除子任务" data-action="delete-subtask" data-task-id="${escapeHtml(task.id)}" data-subtask-id="${escapeHtml(subtask.id)}">删</button>
+    </div>
+  `;
+}
+
+function renderSubtasks(task) {
+  const list = document.querySelector("[data-subtask-list]");
+  const count = document.querySelector("[data-subtask-count]");
+  const summary = getSubtaskSummary(task);
+
+  count.textContent = summary.total ? `${summary.completed}/${summary.total}` : "暂无";
+  list.innerHTML = summary.total
+    ? task.subtasks.map((subtask) => renderSubtaskRow(task, subtask)).join("")
+    : `<div class="subtask-empty">还没有子任务</div>`;
+}
+
+function openEditDialog(task, focusSelector = "") {
   const dialog = document.querySelector("[data-dialog]");
   const form = document.querySelector('[data-form="edit"]');
   form.elements.id.value = task.id;
   form.elements.title.value = task.title;
   form.elements.note.value = task.note;
+  document.querySelector("[data-edit-status]").innerHTML = renderEditStatus(task);
+  renderSubtasks(task);
   dialog.showModal();
-  form.elements.title.focus();
+  const focusTarget = focusSelector ? document.querySelector(focusSelector) : form.elements.title;
+  focusTarget?.focus();
 }
 
 function bindEvents() {
@@ -270,6 +408,17 @@ function bindEvents() {
       setTasks(toggleTask(tasks, taskId));
     }
 
+    if (action.dataset.action === "cycle-status") {
+      const task = tasks.find((item) => item.id === taskId);
+      const currentStatus = statusMeta[task?.status] ? task.status : "todo";
+      setTasks(updateTaskStatus(tasks, taskId, statusMeta[currentStatus].next));
+    }
+
+    if (action.dataset.action === "filter-status") {
+      activeStatusFilter = statusFilters.includes(action.dataset.statusFilter) ? action.dataset.statusFilter : "all";
+      render();
+    }
+
     if (action.dataset.action === "edit") {
       const task = tasks.find((item) => item.id === taskId);
       if (task) {
@@ -281,8 +430,63 @@ function bindEvents() {
       setTasks(deleteTask(tasks, taskId));
     }
 
+    if (action.dataset.action === "add-subtask") {
+      const form = document.querySelector('[data-form="edit"]');
+      const id = form.elements.id.value;
+      const input = document.querySelector("[data-subtask-new-title]");
+      setTasksAndReopen(addSubtask(tasks, id, { title: input.value }), id, "[data-subtask-new-title]");
+    }
+
+    if (action.dataset.action === "toggle-subtask") {
+      setTasksAndReopen(toggleSubtask(tasks, taskId, action.dataset.subtaskId), taskId);
+    }
+
+    if (action.dataset.action === "delete-subtask") {
+      setTasksAndReopen(deleteSubtask(tasks, taskId, action.dataset.subtaskId), taskId);
+    }
+
     if (action.dataset.action === "cancel-edit") {
       document.querySelector("[data-dialog]").close();
+    }
+  });
+
+  appRoot.addEventListener("change", (event) => {
+    const statusInput = event.target.closest("[data-task-status]");
+    if (statusInput) {
+      const form = document.querySelector('[data-form="edit"]');
+      const id = form.elements.id.value;
+      setTasksAndReopen(updateTaskStatus(tasks, id, statusInput.value), id);
+      return;
+    }
+
+    const subtaskTitle = event.target.closest("[data-subtask-title]");
+    if (subtaskTitle) {
+      setTasksAndReopen(
+        updateSubtask(tasks, subtaskTitle.dataset.taskId, subtaskTitle.dataset.subtaskId, {
+          title: subtaskTitle.value
+        }),
+        subtaskTitle.dataset.taskId
+      );
+    }
+  });
+
+  appRoot.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
+    const newSubtaskInput = event.target.closest("[data-subtask-new-title]");
+    if (newSubtaskInput) {
+      event.preventDefault();
+      const form = document.querySelector('[data-form="edit"]');
+      const id = form.elements.id.value;
+      setTasksAndReopen(addSubtask(tasks, id, { title: newSubtaskInput.value }), id, "[data-subtask-new-title]");
+    }
+
+    const subtaskTitle = event.target.closest("[data-subtask-title]");
+    if (subtaskTitle) {
+      event.preventDefault();
+      subtaskTitle.blur();
     }
   });
 
