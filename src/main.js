@@ -1,5 +1,9 @@
 import "./styles.css";
 import {
+  getShowSubtasksInlinePreference,
+  setShowSubtasksInlinePreference
+} from "./preferences.js";
+import {
   addSubtask,
   addTask,
   deleteSubtask,
@@ -67,6 +71,7 @@ let tasks = [];
 let draggedTaskId = "";
 let statusTimer = 0;
 let activeStatusFilter = "all";
+let showSubtasksInline = getShowSubtasksInlinePreference();
 
 function escapeHtml(value) {
   return String(value)
@@ -187,6 +192,28 @@ function renderTaskMeta(task) {
   return parts.join("");
 }
 
+function renderInlineSubtasks(task) {
+  const subtasks = Array.isArray(task.subtasks) ? task.subtasks : [];
+  if (!showSubtasksInline || !subtasks.length) {
+    return "";
+  }
+
+  return `
+    <span class="inline-subtasks" aria-label="子任务列表">
+      ${subtasks
+        .map(
+          (subtask) => `
+            <span class="inline-subtask ${subtask.completed ? "is-completed" : ""}">
+              <span class="inline-subtask-marker" aria-hidden="true"></span>
+              <span class="inline-subtask-title">${escapeHtml(subtask.title)}</span>
+            </span>
+          `
+        )
+        .join("")}
+    </span>
+  `;
+}
+
 function renderTask(task) {
   return `
     <article class="task-card ${task.completed ? "is-completed" : ""}" draggable="true" data-task-id="${escapeHtml(task.id)}">
@@ -198,6 +225,7 @@ function renderTask(task) {
         <strong>${escapeHtml(task.title)}</strong>
         ${task.note ? `<small>${escapeHtml(task.note)}</small>` : ""}
         ${renderTaskMeta(task)}
+        ${renderInlineSubtasks(task)}
       </button>
       ${renderStatusChip(task)}
       <button class="icon-button danger" type="button" title="删除" aria-label="删除任务" data-action="delete" data-task-id="${escapeHtml(task.id)}">删</button>
@@ -243,6 +271,10 @@ function render() {
         </div>
         <div class="topbar-meta">
           ${renderStatusFilters(summary)}
+          <label class="display-toggle">
+            <input type="checkbox" data-preference="show-subtasks-inline" ${showSubtasksInline ? "checked" : ""} />
+            <span>显示子任务</span>
+          </label>
           <span class="save-status" data-status data-tone="neutral">已自动保存</span>
         </div>
       </header>
@@ -451,6 +483,14 @@ function bindEvents() {
   });
 
   appRoot.addEventListener("change", (event) => {
+    const preferenceInput = event.target.closest('[data-preference="show-subtasks-inline"]');
+    if (preferenceInput) {
+      showSubtasksInline = preferenceInput.checked;
+      setShowSubtasksInlinePreference(showSubtasksInline);
+      render();
+      return;
+    }
+
     const statusInput = event.target.closest("[data-task-status]");
     if (statusInput) {
       const form = document.querySelector('[data-form="edit"]');

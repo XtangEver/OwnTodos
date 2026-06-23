@@ -70,7 +70,8 @@ button {
 }
 
 .topbar-meta > span,
-.filter-tab {
+.filter-tab,
+.display-toggle {
   flex: 0 0 auto;
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -79,6 +80,21 @@ button {
   background: rgba(255, 255, 255, 0.76);
   font-size: 13px;
   box-shadow: 0 8px 22px rgba(30, 38, 51, 0.05);
+}
+
+.display-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  white-space: nowrap;
+}
+
+.display-toggle input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--blue);
 }
 
 .filter-tab {
@@ -328,6 +344,64 @@ button {
 .subtask-progress {
   color: #647084;
   font-size: 12.5px;
+}
+
+.inline-subtasks {
+  display: grid;
+  gap: 5px;
+  margin-top: 9px;
+  padding-top: 8px;
+  border-top: 1px solid #edf1f5;
+}
+
+.inline-subtask {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 7px;
+  align-items: start;
+  color: #526071;
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+
+.inline-subtask-marker {
+  position: relative;
+  width: 13px;
+  height: 13px;
+  margin-top: 2px;
+  border: 1px solid #b8c3d0;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.inline-subtask.is-completed {
+  color: #7d8998;
+}
+
+.inline-subtask.is-completed .inline-subtask-title {
+  text-decoration: line-through;
+}
+
+.inline-subtask.is-completed .inline-subtask-marker {
+  border-color: var(--green);
+  background: var(--green);
+}
+
+.inline-subtask.is-completed .inline-subtask-marker::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 3px;
+  height: 7px;
+  border: solid #fff;
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+}
+
+.inline-subtask-title {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .status-chip {
