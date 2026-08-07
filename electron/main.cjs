@@ -91,12 +91,14 @@ function createWindow() {
     minWidth: 860,
     minHeight: 620,
     title: "OwnTodos",
+    titleBarStyle: "hidden",
+    titleBarOverlay: { color: "#f2f4f7", symbolColor: "#3a4048", height: 40 },
     icon: getTrayIconPath({
       baseDir: __dirname,
       isPackaged: app.isPackaged,
       resourcesPath: process.resourcesPath
     }),
-    backgroundColor: "#f5f7f9",
+    backgroundColor: "#f2f4f7",
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,

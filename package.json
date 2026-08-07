@@ -1,6 +1,6 @@
 {
   "name": "owntodos",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "description": "一个离线本地的 Windows 任务工具。",
   "main": "electron/main.cjs",
   "type": "module",
@@ -9,6 +9,7 @@
     "electron": "electron .",
     "test": "vitest",
     "build": "vite build",
+    "build:icon": "node scripts/build-icon.mjs",
     "dist": "npm run build && electron-builder --win nsis"
   },
   "build": {

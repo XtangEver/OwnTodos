@@ -21,48 +21,69 @@ import {
   updateTaskStatus
 } from "./taskStore.js";
 
+function icon(paths, size = 16) {
+  return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+}
+
+const icons = {
+  plus: icon('<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>'),
+  trash: icon('<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>', 14),
+  star: icon('<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>', 13),
+  flag: icon('<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>', 13),
+  zap: icon('<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>', 15),
+  calendar: icon('<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>', 15),
+  clock: icon('<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/>', 15),
+  bookmark: icon('<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>', 15)
+};
+
+const brandMark = `<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="0.5" y="0.5" width="17" height="17" rx="4.5" fill="#ffffff" stroke="#e4e7ec"/><rect x="3.4" y="3.4" width="5.2" height="5.2" rx="1.5" fill="#e5484d"/><rect x="9.4" y="3.4" width="5.2" height="5.2" rx="1.5" fill="#3e63dd"/><rect x="3.4" y="9.4" width="5.2" height="5.2" rx="1.5" fill="#f07613"/><rect x="9.4" y="9.4" width="5.2" height="5.2" rx="1.5" fill="#6e56cf"/></svg>`;
+
 const quadrantMeta = {
   do: {
     title: "今天完成",
     hint: "需要尽快处理",
     urgent: true,
-    important: true
+    important: true,
+    icon: icons.zap
   },
   schedule: {
     title: "计划推进",
     hint: "按节奏安排",
     urgent: false,
-    important: true
+    important: true,
+    icon: icons.calendar
   },
   delegate: {
     title: "等待跟进",
     hint: "等待回复或协助",
     urgent: true,
-    important: false
+    important: false,
+    icon: icons.clock
   },
   later: {
     title: "稍后再看",
     hint: "暂时不占用注意力",
     urgent: false,
-    important: false
+    important: false,
+    icon: icons.bookmark
   }
 };
 
 const quadrants = Object.keys(quadrantMeta);
 const statusMeta = {
   all: {
-    label: "All"
+    label: "全部"
   },
   todo: {
-    label: "To Do",
+    label: "待办",
     next: "doing"
   },
   doing: {
-    label: "In Progress",
+    label: "进行中",
     next: "todo"
   },
   done: {
-    label: "Done"
+    label: "已完成"
   }
 };
 const statusFilters = ["all", "todo", "doing", "done"];
@@ -108,7 +129,7 @@ function setStatus(message, tone = "neutral") {
   status.dataset.tone = tone;
   clearTimeout(statusTimer);
   statusTimer = setTimeout(() => {
-    status.textContent = "本地自动保存";
+    status.textContent = "已自动保存";
     status.dataset.tone = "neutral";
   }, 2200);
 }
@@ -163,7 +184,7 @@ function renderStatusChip(task) {
   const status = statusMeta[task.status] ? task.status : "todo";
   return `
     <button class="status-chip status-${status}" type="button" title="切换任务状态" data-action="cycle-status" data-task-id="${escapeHtml(task.id)}">
-      ${statusMeta[status].label}
+      <span class="chip-dot" aria-hidden="true"></span>${statusMeta[status].label}
     </button>
   `;
 }
@@ -183,13 +204,17 @@ function renderStatusFilters(summary) {
 
 function renderTaskMeta(task) {
   const subtaskSummary = getSubtaskSummary(task);
-  const parts = [];
-
-  if (subtaskSummary.total) {
-    parts.push(`<small class="subtask-progress">子任务 ${subtaskSummary.completed}/${subtaskSummary.total}</small>`);
+  if (!subtaskSummary.total) {
+    return "";
   }
 
-  return parts.join("");
+  const percent = Math.round((subtaskSummary.completed / subtaskSummary.total) * 100);
+  return `
+    <span class="subtask-progress">
+      <span class="progress-track" aria-hidden="true"><span class="progress-bar" style="width: ${percent}%"></span></span>
+      <span class="progress-text">子任务 ${subtaskSummary.completed}/${subtaskSummary.total}</span>
+    </span>
+  `;
 }
 
 function renderInlineSubtasks(task) {
@@ -219,7 +244,7 @@ function renderTask(task) {
     <article class="task-card ${task.completed ? "is-completed" : ""}" draggable="true" data-task-id="${escapeHtml(task.id)}">
       <label class="task-check">
         <input type="checkbox" aria-label="切换完成状态" data-action="toggle" data-task-id="${escapeHtml(task.id)}" ${task.completed ? "checked" : ""} />
-        <span></span>
+        <span aria-hidden="true"></span>
       </label>
       <button class="task-body" type="button" data-action="edit" data-task-id="${escapeHtml(task.id)}">
         <strong>${escapeHtml(task.title)}</strong>
@@ -227,8 +252,10 @@ function renderTask(task) {
         ${renderTaskMeta(task)}
         ${renderInlineSubtasks(task)}
       </button>
-      ${renderStatusChip(task)}
-      <button class="icon-button danger" type="button" title="删除" aria-label="删除任务" data-action="delete" data-task-id="${escapeHtml(task.id)}">删</button>
+      <div class="task-actions">
+        ${renderStatusChip(task)}
+        <button class="icon-button danger" type="button" title="删除" aria-label="删除任务" data-action="delete" data-task-id="${escapeHtml(task.id)}">${icons.trash}</button>
+      </div>
     </article>
   `;
 }
@@ -241,11 +268,12 @@ function renderQuadrant(quadrant) {
   return `
     <section class="quadrant" data-quadrant="${quadrant}">
       <header class="quadrant-header">
-        <div>
+        <span class="quadrant-icon" aria-hidden="true">${meta.icon}</span>
+        <div class="quadrant-title">
           <h2>${meta.title}</h2>
           <p>${meta.hint}</p>
         </div>
-        <span>${countPending(items)}/${items.length}</span>
+        <span class="quadrant-count">${countPending(items)}/${items.length}</span>
       </header>
       <div class="task-list" data-drop-zone="${quadrant}">
         ${items.length ? items.map(renderTask).join("") : `<div class="empty-state">暂无任务</div>`}
@@ -263,33 +291,42 @@ function render() {
   }).format(new Date());
 
   appRoot.innerHTML = `
+    <header class="titlebar">
+      <span class="titlebar-brand">${brandMark}<span>OwnTodos</span></span>
+    </header>
     <main class="app-shell">
       <header class="topbar">
-        <div>
+        <div class="topbar-brand">
           <h1>OwnTodos</h1>
           <p>${dateLabel}</p>
         </div>
         <div class="topbar-meta">
-          ${renderStatusFilters(summary)}
-          <label class="display-toggle">
+          <div class="filter-tabs" role="group" aria-label="按状态筛选">
+            ${renderStatusFilters(summary)}
+          </div>
+          <label class="toggle">
             <input type="checkbox" data-preference="show-subtasks-inline" ${showSubtasksInline ? "checked" : ""} />
-            <span>显示子任务</span>
+            <span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>
+            <span class="toggle-label">显示子任务</span>
           </label>
           <span class="save-status" data-status data-tone="neutral">已自动保存</span>
         </div>
       </header>
 
       <form class="quick-add" data-form="add">
-        <input name="title" autocomplete="off" placeholder="写下一个任务" />
-        <label class="switch">
+        <span class="quick-add-icon" aria-hidden="true">${icons.plus}</span>
+        <input name="title" autocomplete="off" placeholder="写下一个任务，回车快速添加" />
+        <label class="chip chip-important">
           <input type="checkbox" name="important" checked />
-          <span>优先</span>
+          ${icons.star}
+          <span>重要</span>
         </label>
-        <label class="switch">
+        <label class="chip chip-urgent">
           <input type="checkbox" name="urgent" checked />
-          <span>尽快</span>
+          ${icons.flag}
+          <span>紧急</span>
         </label>
-        <button type="submit">添加</button>
+        <button type="submit">添加任务</button>
       </form>
 
       <section class="matrix">
@@ -299,6 +336,7 @@ function render() {
       <dialog class="edit-dialog" data-dialog>
         <form method="dialog" data-form="edit">
           <input type="hidden" name="id" />
+          <h3 class="dialog-title">编辑任务</h3>
           <label>
             <span>任务</span>
             <input name="title" autocomplete="off" />
@@ -346,12 +384,12 @@ function getGlobalIndexForDrop(quadrant, targetTaskId = "") {
 
 function renderEditStatus(task) {
   if (task.completed) {
-    return `<legend>Status</legend><p class="completed-status">Done</p>`;
+    return `<legend>状态</legend><p class="completed-status">已完成</p>`;
   }
 
   const status = statusMeta[task.status] ? task.status : "todo";
   return `
-    <legend>Status</legend>
+    <legend>状态</legend>
     <div class="status-segment">
       ${["todo", "doing"]
         .map(
@@ -372,7 +410,7 @@ function renderSubtaskRow(task, subtask) {
     <div class="subtask-row">
       <input type="checkbox" aria-label="切换子任务完成状态" data-action="toggle-subtask" data-task-id="${escapeHtml(task.id)}" data-subtask-id="${escapeHtml(subtask.id)}" ${subtask.completed ? "checked" : ""} />
       <input type="text" value="${escapeHtml(subtask.title)}" data-subtask-title data-task-id="${escapeHtml(task.id)}" data-subtask-id="${escapeHtml(subtask.id)}" />
-      <button class="icon-button danger" type="button" title="删除" aria-label="删除子任务" data-action="delete-subtask" data-task-id="${escapeHtml(task.id)}" data-subtask-id="${escapeHtml(subtask.id)}">删</button>
+      <button class="icon-button danger" type="button" title="删除" aria-label="删除子任务" data-action="delete-subtask" data-task-id="${escapeHtml(task.id)}" data-subtask-id="${escapeHtml(subtask.id)}">${icons.trash}</button>
     </div>
   `;
 }
@@ -399,6 +437,10 @@ function openEditDialog(task, focusSelector = "") {
   dialog.showModal();
   const focusTarget = focusSelector ? document.querySelector(focusSelector) : form.elements.title;
   focusTarget?.focus();
+}
+
+function clearDragOverState() {
+  appRoot.querySelectorAll(".is-drag-over").forEach((zone) => zone.classList.remove("is-drag-over"));
 }
 
 function bindEvents() {
@@ -542,10 +584,22 @@ function bindEvents() {
   });
 
   appRoot.addEventListener("dragover", (event) => {
-    if (event.target.closest("[data-drop-zone]")) {
-      event.preventDefault();
-      event.dataTransfer.dropEffect = "move";
+    const zone = event.target.closest("[data-drop-zone]");
+    if (!zone) {
+      return;
     }
+
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    if (!zone.classList.contains("is-drag-over")) {
+      clearDragOverState();
+      zone.classList.add("is-drag-over");
+    }
+  });
+
+  appRoot.addEventListener("dragend", () => {
+    draggedTaskId = "";
+    clearDragOverState();
   });
 
   appRoot.addEventListener("drop", (event) => {
@@ -555,6 +609,7 @@ function bindEvents() {
     }
 
     event.preventDefault();
+    clearDragOverState();
     const quadrant = zone.dataset.dropZone;
     const targetCard = event.target.closest(".task-card");
     const targetTaskId = targetCard?.dataset.taskId === draggedTaskId ? "" : targetCard?.dataset.taskId;
