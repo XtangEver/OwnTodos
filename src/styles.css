@@ -1044,6 +1044,235 @@ button:focus-visible,
   background: #000;
 }
 
+/* ---------- Markdown 笔记 ---------- */
+
+.notes-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.notes-open:hover {
+  background: #f6f7f9;
+  border-color: #d3d8e0;
+}
+
+.notes-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding-bottom: 24px;
+}
+
+.notes-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.notes-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 13px;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.notes-back:hover {
+  background: #f6f7f9;
+  color: var(--text);
+}
+
+.notes-editor {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.notes-input {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 20px 24px;
+  border: none;
+  border-right: 1px solid var(--line);
+  outline: none;
+  resize: none;
+  background: #fbfcfe;
+  color: var(--text);
+  font-family: "Cascadia Code", Consolas, "JetBrains Mono", monospace;
+  font-size: 13.5px;
+  line-height: 1.75;
+  overflow-y: auto;
+}
+
+.markdown-preview {
+  padding: 20px 28px;
+  overflow-y: auto;
+  font-size: 14.5px;
+  line-height: 1.75;
+  word-break: break-word;
+}
+
+.markdown-preview > :first-child {
+  margin-top: 0;
+}
+
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3,
+.markdown-preview h4,
+.markdown-preview h5,
+.markdown-preview h6 {
+  margin: 1.2em 0 0.5em;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.markdown-preview h1 {
+  font-size: 24px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.markdown-preview h2 {
+  font-size: 20px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.markdown-preview h3 {
+  font-size: 17px;
+}
+
+.markdown-preview h4 {
+  font-size: 15px;
+}
+
+.markdown-preview p {
+  margin: 0.6em 0;
+}
+
+.markdown-preview ul,
+.markdown-preview ol {
+  margin: 0.6em 0;
+  padding-left: 1.6em;
+}
+
+.markdown-preview li + li {
+  margin-top: 0.25em;
+}
+
+.markdown-preview li input[type="checkbox"] {
+  margin: 0 6px 0 -1.3em;
+  vertical-align: middle;
+}
+
+.markdown-preview blockquote {
+  margin: 0.8em 0;
+  padding: 2px 16px;
+  border-left: 3px solid var(--line);
+  color: var(--muted);
+  background: #f8f9fb;
+  border-radius: 0 8px 8px 0;
+}
+
+.markdown-preview code {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #eef0f4;
+  font-family: "Cascadia Code", Consolas, "JetBrains Mono", monospace;
+  font-size: 0.88em;
+}
+
+.markdown-preview pre {
+  margin: 0.8em 0;
+  padding: 14px 18px;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: #f8f9fb;
+  overflow-x: auto;
+}
+
+.markdown-preview pre code {
+  padding: 0;
+  background: transparent;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.markdown-preview table {
+  margin: 0.8em 0;
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13.5px;
+}
+
+.markdown-preview th,
+.markdown-preview td {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  text-align: left;
+}
+
+.markdown-preview th {
+  background: #f6f7f9;
+  font-weight: 600;
+}
+
+.markdown-preview tr:nth-child(even) td {
+  background: #fafbfc;
+}
+
+.markdown-preview a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.markdown-preview a:hover {
+  text-decoration: underline;
+}
+
+.markdown-preview img {
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+.markdown-preview hr {
+  margin: 1.4em 0;
+  border: none;
+  border-top: 1px solid var(--line);
+}
+
+.markdown-preview .preview-placeholder {
+  color: var(--faint);
+}
+
 /* ---------- 响应式 ---------- */
 
 @media (max-width: 900px) {
@@ -1072,5 +1301,15 @@ button:focus-visible,
 
   .matrix {
     grid-template-columns: 1fr;
+  }
+
+  .notes-editor {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+
+  .notes-input {
+    border-right: none;
+    border-bottom: 1px solid var(--line);
   }
 }

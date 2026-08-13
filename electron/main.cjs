@@ -33,6 +33,24 @@ async function writeTasksFile(tasks) {
   return { ok: true };
 }
 
+function getNotesFilePath() {
+  return path.join(app.getPath("userData"), "notes.md");
+}
+
+async function readNotesFile() {
+  try {
+    return await fs.readFile(getNotesFilePath(), "utf8");
+  } catch {
+    return "";
+  }
+}
+
+async function writeNotesFile(content) {
+  await fs.mkdir(app.getPath("userData"), { recursive: true });
+  await fs.writeFile(getNotesFilePath(), String(content ?? ""), "utf8");
+  return { ok: true };
+}
+
 function showMainWindow() {
   if (!mainWindow || mainWindow.isDestroyed()) {
     createWindow();
@@ -141,6 +159,8 @@ app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
   ipcMain.handle("tasks:load", readTasksFile);
   ipcMain.handle("tasks:save", (_event, tasks) => writeTasksFile(tasks));
+  ipcMain.handle("notes:load", readNotesFile);
+  ipcMain.handle("notes:save", (_event, content) => writeNotesFile(content));
 
   createWindow();
   createTray();

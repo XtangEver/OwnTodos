@@ -1,4 +1,7 @@
 import "./styles.css";
+import "highlight.js/styles/github.css";
+import { marked } from "marked";
+import hljs from "highlight.js/lib/common";
 import {
   getShowSubtasksInlinePreference,
   setShowSubtasksInlinePreference
@@ -33,7 +36,9 @@ const icons = {
   zap: icon('<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>', 15),
   calendar: icon('<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>', 15),
   clock: icon('<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/>', 15),
-  bookmark: icon('<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>', 15)
+  bookmark: icon('<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>', 15),
+  note: icon('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>', 15),
+  back: icon('<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>', 15)
 };
 
 const brandMark = `<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="0.5" y="0.5" width="17" height="17" rx="4.5" fill="#ffffff" stroke="#e4e7ec"/><rect x="3.4" y="3.4" width="5.2" height="5.2" rx="1.5" fill="#e5484d"/><rect x="9.4" y="3.4" width="5.2" height="5.2" rx="1.5" fill="#3e63dd"/><rect x="3.4" y="9.4" width="5.2" height="5.2" rx="1.5" fill="#f07613"/><rect x="9.4" y="9.4" width="5.2" height="5.2" rx="1.5" fill="#6e56cf"/></svg>`;
@@ -93,6 +98,10 @@ let draggedTaskId = "";
 let statusTimer = 0;
 let activeStatusFilter = "all";
 let showSubtasksInline = getShowSubtasksInlinePreference();
+let activeView = "tasks";
+let notesText = "";
+let notesStatusTimer = 0;
+let notesSaveTimer = 0;
 
 function escapeHtml(value) {
   return String(value)
@@ -119,6 +128,22 @@ function getTaskApi() {
   };
 }
 
+function getNotesApi() {
+  if (window.quadrantTodo) {
+    return window.quadrantTodo;
+  }
+
+  return {
+    async loadNotes() {
+      return localStorage.getItem("quadrantTodo.notes") ?? "";
+    },
+    async saveNotes(content) {
+      localStorage.setItem("quadrantTodo.notes", content);
+      return { ok: true };
+    }
+  };
+}
+
 function setStatus(message, tone = "neutral") {
   const status = document.querySelector("[data-status]");
   if (!status) {
@@ -140,6 +165,97 @@ async function persist() {
     setStatus("已保存", "success");
   } catch {
     setStatus("保存失败，当前修改仍保留在窗口中", "error");
+  }
+}
+
+function setNotesStatus(message, tone = "neutral") {
+  const status = document.querySelector("[data-notes-status]");
+  if (!status) {
+    return;
+  }
+
+  status.textContent = message;
+  status.dataset.tone = tone;
+  clearTimeout(notesStatusTimer);
+  notesStatusTimer = setTimeout(() => {
+    status.textContent = "已自动保存";
+    status.dataset.tone = "neutral";
+  }, 2200);
+}
+
+async function persistNotes() {
+  try {
+    await getNotesApi().saveNotes(notesText);
+    setNotesStatus("已保存", "success");
+  } catch {
+    setNotesStatus("保存失败，当前修改仍保留在窗口中", "error");
+  }
+}
+
+function scheduleNotesSave() {
+  clearTimeout(notesSaveTimer);
+  notesSaveTimer = setTimeout(persistNotes, 600);
+}
+
+function updateNotesPreview() {
+  const preview = document.querySelector("[data-notes-preview]");
+  if (!preview) {
+    return;
+  }
+
+  preview.innerHTML = notesText.trim()
+    ? marked.parse(notesText, { breaks: true, gfm: true })
+    : `<p class="preview-placeholder">预览区域：在左侧输入 Markdown 内容</p>`;
+  preview.querySelectorAll("pre code").forEach((block) => hljs.highlightElement(block));
+}
+
+function renderNotesView() {
+  appRoot.innerHTML = `
+    <header class="titlebar">
+      <span class="titlebar-brand">${brandMark}<span>OwnTodos</span></span>
+    </header>
+    <main class="app-shell notes-shell">
+      <header class="topbar">
+        <div class="topbar-brand notes-brand">
+          <button class="notes-back" type="button" data-action="close-notes">${icons.back}<span>返回</span></button>
+          <h1>Markdown 笔记</h1>
+        </div>
+        <div class="topbar-meta">
+          <span class="save-status" data-notes-status data-tone="neutral">已自动保存</span>
+        </div>
+      </header>
+      <section class="notes-editor">
+        <textarea class="notes-input" data-notes-input spellcheck="false" placeholder="在这里输入 Markdown，支持标题、列表、表格、代码块等常用语法"></textarea>
+        <div class="markdown-preview" data-notes-preview></div>
+      </section>
+    </main>
+  `;
+
+  const input = document.querySelector("[data-notes-input]");
+  input.value = notesText;
+  updateNotesPreview();
+}
+
+async function openNotesView() {
+  activeView = "notes";
+  render();
+
+  try {
+    notesText = await getNotesApi().loadNotes();
+  } catch {
+    notesText = "";
+    setNotesStatus("读取失败，已从空白开始", "error");
+  }
+
+  if (activeView !== "notes") {
+    return;
+  }
+
+  const input = document.querySelector("[data-notes-input]");
+  if (input) {
+    input.value = notesText;
+    updateNotesPreview();
+    input.focus();
   }
 }
 
@@ -283,6 +399,11 @@ function renderQuadrant(quadrant) {
 }
 
 function render() {
+  if (activeView === "notes") {
+    renderNotesView();
+    return;
+  }
+
   const summary = getSummary();
   const dateLabel = new Intl.DateTimeFormat("zh-CN", {
     month: "long",
@@ -309,6 +430,7 @@ function render() {
             <span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>
             <span class="toggle-label">显示子任务</span>
           </label>
+          <button class="notes-open" type="button" data-action="open-notes">${icons.note}<span>笔记</span></button>
           <span class="save-status" data-status data-tone="neutral">已自动保存</span>
         </div>
       </header>
@@ -478,6 +600,15 @@ function bindEvents() {
     }
 
     const taskId = action.dataset.taskId;
+    if (action.dataset.action === "open-notes") {
+      openNotesView();
+    }
+
+    if (action.dataset.action === "close-notes") {
+      activeView = "tasks";
+      render();
+    }
+
     if (action.dataset.action === "toggle") {
       setTasks(toggleTask(tasks, taskId));
     }
@@ -570,6 +701,17 @@ function bindEvents() {
       event.preventDefault();
       subtaskTitle.blur();
     }
+  });
+
+  appRoot.addEventListener("input", (event) => {
+    const notesInput = event.target.closest("[data-notes-input]");
+    if (!notesInput) {
+      return;
+    }
+
+    notesText = notesInput.value;
+    updateNotesPreview();
+    scheduleNotesSave();
   });
 
   appRoot.addEventListener("dragstart", (event) => {
